@@ -1,0 +1,41 @@
+{{- define "vault-agent-lib.configmap.tpl" }}
+{{- range .Values.vault }}
+{{ .auth.role }}.hcl: |
+  exit_after_auth = true
+
+  pid_file = "/tmp/pidfile"
+
+  vault {
+    address = "{{- .host -}}"
+    tls_skip_verify = {{- .tlsSkipVerify -}}
+  }
+
+  auto_auth {
+      method "kubernetes" {
+          mount_path = "{{- .auth.mountPath -}}"
+          config = {
+              role = "{{- .auth.role -}}"
+          }
+      }
+
+      sink "file" {
+          config = {
+              path = "/tmp/.vault-token"
+          }
+      }
+  }
+  {{ range .secrets }}
+  {{- $d := .directory -}}
+  {{ range .files }}
+  template {
+  destination = "{{- $d -}}/{{- .filename -}}"
+  contents = <<EOT
+  {{`{{- with secret `}}"{{- .source -}}"{{` -}}`}}
+{{ .template | indent 2 -}}
+{{`{{- end }}`}}
+  EOT
+  }
+  {{ end -}}
+  {{ end }}
+{{- end -}}
+{{- end -}}

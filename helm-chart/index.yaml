@@ -1,0 +1,14 @@
+apiVersion: v1
+entries:
+  vault-agent-lib:
+  - apiVersion: v2
+    appVersion: 1.16.0
+    created: "2021-03-05T00:44:07.865317-08:00"
+    description: A Helm chart library for Vault agent
+    digest: 5bb7aa7db7782d6e638e5487952e4d92937370423ab0a9552dd57f07fdb90af9
+    name: vault-agent-lib
+    type: library
+    urls:
+    - https://eekwong.github.io/vault-agent-lib/helm-chart/vault-agent-lib-0.1.0.tgz
+    version: 0.1.0
+generated: "2021-03-05T00:44:07.86496-08:00"

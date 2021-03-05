@@ -1,0 +1,55 @@
+{{- define "vault-agent-lib.initContainer.tpl" }}
+{{- range .Values.vault }}
+- name: vault-agent-init-{{ .auth.role }}
+  image: vault:1.6.1
+  args:
+    - agent
+    - -config=/etc/vault/{{ .auth.role }}.hcl
+    - -log-level=debug
+  volumeMounts:
+    - mountPath: /etc/vault
+      name: {{ $.Release.Name | printf "%s-%s" $.Chart.Name }}-config
+    {{- range .secrets }}
+    - mountPath: "{{- .directory -}}"
+      name: "shared-data-{{- .name -}}"
+    {{- end }}
+    {{- if .projectedServiceAccountToken }}
+    - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+      name: sa-token-{{ .auth.role }}
+    {{- end }}
+{{- end -}}
+{{- end -}}
+
+{{- define "vault-agent-lib.volumeMounts.tpl" }}
+{{- range .Values.vault }}
+{{- range .secrets }}
+- mountPath: "{{- .directory -}}"
+  name: "shared-data-{{- .name -}}"
+{{- end }}
+{{- end -}}
+{{- end }}
+
+{{- define "vault-agent-lib.volumes.tpl" }}
+- configMap:
+    name: {{ .Release.Name | printf "%s-%s" .Chart.Name }}-config
+    items:
+      {{- range .Values.vault }}
+      - key: {{ .auth.role }}.hcl
+        path: {{ .auth.role }}.hcl
+      {{- end }}
+  name: {{ .Release.Name | printf "%s-%s" .Chart.Name }}-config
+{{- range .Values.vault }}
+{{- range .secrets }}
+- emptyDir: {}
+  name: "shared-data-{{- .name -}}"
+{{- end }}
+{{- if .projectedServiceAccountToken }}
+- name: sa-token-{{ .auth.role }}
+  projected:
+    sources:
+      - serviceAccountToken:
+          path: token
+          expirationSeconds: 600
+{{- end }}
+{{- end }}
+{{- end }}
